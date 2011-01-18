@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HistDetect", "HistDetect\HistDetect.vcxproj", "{1E4770CD-ACA1-48AD-B19D-CA62949E4881}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F68EC71D-A34A-FBBE-89B3-8B4F42EEC5E9} = {F68EC71D-A34A-FBBE-89B3-8B4F42EEC5E9}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Serial", "Serial\Serial.vcxproj", "{F68EC71D-A34A-FBBE-89B3-8B4F42EEC5E9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1E4770CD-ACA1-48AD-B19D-CA62949E4881}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1E4770CD-ACA1-48AD-B19D-CA62949E4881}.Debug|Win32.Build.0 = Debug|Win32
+		{1E4770CD-ACA1-48AD-B19D-CA62949E4881}.Release|Win32.ActiveCfg = Release|Win32
+		{1E4770CD-ACA1-48AD-B19D-CA62949E4881}.Release|Win32.Build.0 = Release|Win32
+		{F68EC71D-A34A-FBBE-89B3-8B4F42EEC5E9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F68EC71D-A34A-FBBE-89B3-8B4F42EEC5E9}.Debug|Win32.Build.0 = Debug|Win32
+		{F68EC71D-A34A-FBBE-89B3-8B4F42EEC5E9}.Release|Win32.ActiveCfg = Release|Win32
+		{F68EC71D-A34A-FBBE-89B3-8B4F42EEC5E9}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
