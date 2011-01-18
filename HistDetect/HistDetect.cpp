@@ -23,7 +23,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		smin=65,
 		smax=108,
 		vmin=136,
-		vmax=253;
+		vmax=253,
+		histdim=64;
 
 	cv::VideoCapture cap;
 
@@ -38,6 +39,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::cout << "OK\n";
 
 	cv::namedWindow("Raw",cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Histrogram",cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("Filtered",cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("Setting",cv::WINDOW_AUTOSIZE);
 	cv::setMouseCallback("Raw",onMouse,0);
@@ -51,8 +53,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	int keycode=-1;
 	while(keycode!=27)
 	{
-		cv::Mat frame,hsv;
+		cv::Mat frame,hsv,hist,histshow;
 		cv::Mat hue,sat,val;
+		histshow=cv::Mat::zeros(CAM_X,CAM_Y,CV_8UC3);
 		hue=cv::Mat::zeros(CAM_X,CAM_Y,CV_8UC1);
 		sat=cv::Mat::zeros(CAM_X,CAM_Y,CV_8UC1);
 		val=cv::Mat::zeros(CAM_X,CAM_Y,CV_8UC1);
@@ -62,7 +65,11 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		cap >> frame;
 		if(frame.empty())
+		{
+			std::cout<<"err!!!";
+			cv::waitKey(0);
 			break;
+		}
 
 		cv::cvtColor(frame,hsv,CV_BGR2HSV);
 
@@ -72,20 +79,38 @@ int _tmain(int argc, _TCHAR* argv[])
 		cv::mixChannels(&hsv,3,out,3,channelmapping,3);
 		//end split channels
 
+		/*
+		frame.adjustROI(
+			select_rect.y,
+			select_rect.x+select_rect.height,
+			select_rect.x,
+			select_rect.x+select_rect.width);
+		*/
+
+		float histranges[] = {0,180};
+		float* phistranges = histranges;
+		//cv::Mat eoi(1,
+		cv::calcHist(&frame,1,0,select_rect,hist,1,&histdim,&phistranges);
+
 		//threshold
 		cv::inRange(hue,hmin,hmax,hue);
 		cv::inRange(sat,smin,smax,sat);
 		cv::inRange(val,vmin,vmax,val);
 		//end threshold
 
+		//and
 		cv::bitwise_and(hue,sat,threshold,hue);
 		cv::bitwise_and(threshold,val,threshold,val);
+		//end and
 
+		//erode&dilate
 		cv::erode(threshold,threshold,cv::getStructuringElement(cv::MORPH_RECT,cv::Size(3,3)),cv::Point(-1,-1),1,0);
 		cv::dilate(threshold,threshold,cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5,5)),cv::Point(-1,-1),10,0);
+		//end erode&dilate
 
+		//find corner
 		std::vector<cv::Point2f> eig;
-		cv::goodFeaturesToTrack(threshold,eig,20,0.01,10,cv::Mat(),3,false,0.040000000000000001);
+		cv::goodFeaturesToTrack(threshold,eig,50,0.01,10,cv::Mat(),3,false,0.04);
 		cv::cornerSubPix(threshold,eig,cv::Size(10,10),cv::Size(-1,-1),cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS,20,0.03));
 		cv::Point obj_origin;
 		cv::Point obj_corner;
@@ -101,20 +126,16 @@ int _tmain(int argc, _TCHAR* argv[])
 			obj_corner.x=MAX(obj_corner.x,(int)eig[i].x);
 			obj_corner.y=MAX(obj_corner.y,(int)eig[i].y);
 
-			//std::cout<< i << ' ' << (int)eig[i].x << ' ' << (int)eig[i].y << '\n';
-			//std::cout<< i << '-' << obj_rect.x << ' ' << obj_rect.y << '\n';
-
 			cv::circle(frame,eig[i],1,cv::Scalar(255,0,0),1,8,0);
 		}
 		obj_rect.x=obj_origin.x;
 		obj_rect.y=obj_origin.y;
 		obj_rect.width=abs(obj_rect.x-obj_corner.x);
 		obj_rect.height=abs(obj_rect.y-obj_corner.y);
+		//end find corner
 
-		//std::cout<< "RECT:" << obj_rect.x << ' ' << obj_rect.y << '\n';
+
 		cv::rectangle(frame,obj_rect,cv::Scalar(0,0,255),1,8,0);
-
-
 		cv::rectangle(frame,select_rect,cv::Scalar(0,255,0),1,8,0);
 
 		cv::imshow("Raw",frame);
@@ -129,6 +150,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	std::cout << keycode;
 	cv::destroyWindow("Raw");
+	cv::destroyWindow("Histrogram");
 	cv::destroyWindow("Filtered");
 	cv::destroyWindow("Setting");
 
