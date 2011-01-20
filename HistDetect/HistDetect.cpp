@@ -10,6 +10,7 @@
 #define CAM_Y	352
 
 void onMouse(int event, int x, int y, int, void*);
+void SerialInit(HANDLE *hPort,DCB *dcb);
 
 cv::Point select_origin;
 cv::Rect select_rect;
@@ -23,10 +24,29 @@ int _tmain(int argc, _TCHAR* argv[])
 		smin=65,
 		smax=108,
 		vmin=136,
-		vmax=253,
-		histdim=64;
+		vmax=253;
 
 	cv::VideoCapture cap;
+
+	DCB dcb;
+
+	DWORD byteswritten;
+
+	char a[]="abcdefg";
+
+	HANDLE hPort;
+	SerialInit(&hPort,&dcb);
+	WriteFile(
+		hPort,
+		a,	
+		sizeof(a),	
+		&byteswritten,
+		NULL);
+
+	std::cout<<byteswritten;
+
+	CloseHandle(hPort);
+	exit(1);
 
 	std::cout << "initial webcam...";
 	cap.open(0);
@@ -88,9 +108,13 @@ int _tmain(int argc, _TCHAR* argv[])
 		*/
 
 		float histranges[] = {0,180};
-		float* phistranges = histranges;
-		//cv::Mat eoi(1,
-		cv::calcHist(&frame,1,0,select_rect,hist,1,&histdim,&phistranges);
+		const float* phistranges = histranges;
+		int ch[]={0};
+		int histdim=64;
+		cv::Mat mask;
+		cv::Mat roi(hue,select_rect);
+		cv::Mat maskroi(mask,select_rect);
+		cv::calcHist(&roi,1,0,maskroi,hist,1,&histdim,&phistranges,true,false);
 
 		//threshold
 		cv::inRange(hue,hmin,hmax,hue);
@@ -119,7 +143,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		obj_origin.y=(int)eig[0].y;
 		obj_corner.x=(int)eig[0].x;
 		obj_corner.y=(int)eig[0].y;
-		for(int i=0;i<eig.size();i++)
+		for(int i=0;i<(int)eig.size();i++)
 		{
 			obj_origin.x=MIN(obj_origin.x,(int)eig[i].x);
 			obj_origin.y=MIN(obj_origin.y,(int)eig[i].y);
@@ -181,5 +205,31 @@ void onMouse(int event, int x, int y, int, void*)
 	}
 }
 
+void SerialInit(HANDLE *hPort,DCB *dcb)
+{
+    *hPort=CreateFile(
+		_T("COM1"),
+		GENERIC_WRITE,
+		0,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
 
+	if(!GetCommState(*hPort,dcb))
+	{
+		std::cout<< "err comm";
+		exit(0);
+	}
+	dcb->BaudRate=CBR_115200;
+	dcb->ByteSize=8;
+	dcb->Parity=0;
+	dcb->StopBits=0;
+
+    if(!GetCommState(*hPort,dcb))
+	{
+		std::cout<< "err comm";
+		exit(0);
+	}
+}
 
